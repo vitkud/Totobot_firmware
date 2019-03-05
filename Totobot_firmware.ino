@@ -1,5 +1,5 @@
 /*************************************************************************
-* File Name          : orion_firmware.ino
+* File Name          : Totobot_firmware.ino
 * Author             : Ander, Mark Yan
 * Updated            : Ander, Mark Yan
 * Version            : V0a.01.106
