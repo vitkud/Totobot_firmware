@@ -2,9 +2,10 @@
 * File Name          : Totobot_firmware.ino
 * Author             : Ander, Mark Yan
 * Updated            : Ander, Mark Yan
-* Version            : V0a.01.106
-* Date               : 01/03/2017
-* Description        : Firmware for Makeblock Electronic modules with Scratch.  
+* Updated            : Vitaliy
+* Version            : V0a.01.106.t1
+* Date               : 06/03/2019
+* Description        : Firmware for Totobot
 * License            : CC-BY-SA 3.0
 * Copyright (C) 2013 - 2016 Maker Works Technology Co., Ltd. All right reserved.
 * http://www.makeblock.cc/
@@ -13,6 +14,7 @@
 #include <SoftwareSerial.h>
 #include <Arduino.h>
 #include <MeOrion.h>
+#include <AFMotor.h>
 
 Servo servos[8];  
 MeDCMotor dc;
@@ -31,6 +33,8 @@ MeFlameSensor FlameSensor;
 MeGasSensor GasSensor;
 MeTouchSensor touchSensor;
 Me4Button buttonSensor;
+
+AF_DCMotor toMotors[2] = {AF_DCMotor(1), AF_DCMotor(2)};
 
 typedef struct MeModule
 {
@@ -68,7 +72,7 @@ MeModule modules[12];
 #if defined(__AVR_ATmega1280__)|| defined(__AVR_ATmega2560__)
   int analogs[16]={A0,A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15};
 #endif
-String mVersion = "0a.01.106";
+String mVersion = "0a.01.106.t1";
 boolean isAvailable = false;
 boolean isBluetooth = false;
 
@@ -118,6 +122,8 @@ char serialRead;
 #define LEDMATRIX 41
 #define TIMER 50
 #define TOUCH_SENSOR 51
+
+#define TO_MOTOR 90
 
 #define GET 1
 #define RUN 2
@@ -272,7 +278,10 @@ void parseData(){
         dc.run(0);
         dc.reset(PORT_2);
         dc.run(0);
-        
+
+        for (int i = 0; i < sizeof toMotors; ++i)
+          toMotors[i].run(RELEASE);
+
         #if defined(__AVR_ATmega328P__)
           encoders[0].runSpeed(0);
           encoders[1].runSpeed(0);
@@ -498,6 +507,24 @@ void runModule(int device){
     lastTime = millis()/1000.0; 
    }
    break;
+    case TO_MOTOR: {
+      int speed = readShort(7);
+      speed = speed > 255 ? 255 : speed;
+      speed = speed < -255 ? -255 : speed;
+      if (port > 0 && port <= sizeof toMotors) {
+        int i = port - 1;
+        if (speed > 0) {
+          toMotors[i].run(FORWARD);
+          toMotors[i].setSpeed(speed);
+        } else if (speed < 0) {
+          toMotors[i].run(BACKWARD);
+          toMotors[i].setSpeed(-speed);
+        } else {
+          toMotors[i].run(RELEASE);
+        }
+      }
+    }
+    break;
   }
 }
 
